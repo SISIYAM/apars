@@ -1,53 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Data Table</title>
-  <style>
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    table, th, td {
-      border: 1px solid black;
-    }
-    th, td {
-      padding: 10px;
-      text-align: left;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
-  </style>
-</head>
-<body>
-  <h1>Student Data Table</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Address</th>
-        <th>Institution</th>
-        <th>Batch</th>
-        <th>Phone</th>
-        <th>Facebook</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% students.forEach(student => { %>
-        <tr>
-          <td><%= student.Name %></td>
-          <td><%= student.email %></td>
-          <td><%= student.address %></td>
-          <td><%= student.Institution %></td>
-          <td><%= student.batch %></td>
-          <td><%= student.Phone %></td>
-          <td><a href="<%= student.FbLink %>"><%= student.FbName %></a></td>
-        </tr>
-      <% }); %>
-    </tbody>
-  </table>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Data Table</title>
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="content" style="width: 100%; padding: 10px">
+      <h1 class="text-center mb-4">Student Data Table</h1>
+
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+          <thead class="thead-light">
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Address</th>
+              <th>Institution</th>
+              <th>Batch</th>
+              <th>Phone</th>
+              <th>Facebook</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% students.forEach(student => { %>
+            <tr>
+              <td><%= student.Name %></td>
+              <td><%= student.email %></td>
+              <td><%= student.address %></td>
+              <td><%= student.Institution %></td>
+              <td><%= student.batch %></td>
+              <td><%= student.Phone %></td>
+              <td>
+                <a href="<%= student.FbLink %>" target="_blank"
+                  ><%= student.FbName %></a
+                >
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Links -->
+      <nav class="d-flex justify-content-center mt-4">
+        <ul class="pagination flex-wrap">
+          <% if (currentPage > 1) { %>
+          <li class="page-item">
+            <a class="page-link" href="/?page=<%= currentPage - 1 %>"
+              >Previous</a
+            >
+          </li>
+          <% } %> <% for (let i = 1; i <= totalPages; i++) { %>
+          <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+            <a class="page-link" href="/?page=<%= i %>"><%= i %></a>
+          </li>
+          <% } %> <% if (currentPage < totalPages) { %>
+          <li class="page-item">
+            <a class="page-link" href="/?page=<%= currentPage + 1 %>">Next</a>
+          </li>
+          <% } %>
+        </ul>
+      </nav>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </body>
 </html>
