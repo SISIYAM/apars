@@ -12,11 +12,10 @@
   </head>
   <body>
     <div class="container mt-5" style="max-width: 950px">
-      <h1 class="text-center mb-4">Student Attendance Data </h1>
-
+      <h1 class="text-center mb-4">Student Absent Data</h1>
 
       <div class="mb-4 d-flex justify-content-center">
-        <form class="form-inline" action="/" method="GET">
+        <form class="form-inline" action="/absent" method="GET">
           <div class="form-group mr-2">
             <label for="date" class="sr-only">Date</label>
             <input
@@ -31,7 +30,7 @@
             <select name="branch" class="form-control">
               <option value="">All Branches</option>
               <% branches.forEach(branch => { %>
-                <option value="<%= branch.branchName %>" <%= search.branch === branch.branchName ? 'selected' : '' %>>
+                <option value="<%= branch.branchName %>" <%= search.branch === branch.branchName ? 'selected' : '' %> >
                   <%= branch.branchName %>
                 </option>
               <% }); %>
@@ -42,7 +41,7 @@
             <select name="batch" class="form-control">
               <option value="">All Batches</option>
               <% batches.forEach(batch => { %>
-                <option value="<%= batch.batchName %>" <%= search.batch === batch.batchName ? 'selected' : '' %>>
+                <option value="<%= batch.batchName %>" <%= search.batch === batch.batchName ? 'selected' : '' %> >
                   <%= batch.batchName %>
                 </option>
               <% }); %>
@@ -59,8 +58,6 @@
         </form>
       </div>
 
-
-
       <div class="table-responsive text-center" style="max-width: 900px;">
         <table class="table table-bordered table-hover">
           <thead class="thead-light">
@@ -68,7 +65,6 @@
               <th>Name</th>
               <th>Roll</th>
               <th>Phone</th>
-
             </tr>
           </thead>
           <tbody>
@@ -77,50 +73,41 @@
               <td><%= student.Name %></td>
               <td><%= student.roll %></td>
               <td><%= student.Phone %></td>
-              <!-- <td>
-                <a href="<%= student.FbLink %>" target="_blank"
-                  ><%= student.FbName %></a
-                >
-              </td> -->
             </tr>
             <% }); %>
           </tbody>
         </table>
       </div>
 
-      
-        <!-- Pagination Links -->
-<nav class="d-flex justify-content-center mt-4">
-  <ul class="pagination flex-wrap">
-    <% if (currentPage > 1) { %>
-      <li class="page-item">
-        <a class="page-link" href="/?page=<%= currentPage - 1 %>&date=<%= search.date %>&branch=<%= search.branch %>&batch=<%= search.batch %>">Previous</a>
-      </li>
-    <% } else { %>
-      <li class="page-item disabled">
-        <span class="page-link">Previous</span>
-      </li>
-    <% } %>
+      <!-- Pagination Links -->
+      <nav class="d-flex justify-content-center mt-4">
+        <ul class="pagination flex-wrap">
+          <% if (currentPage > 1) { %>
+            <li class="page-item">
+              <a class="page-link" href="/absent?page=<%= currentPage - 1 %>&date=<%= search.date %>&branch=<%= search.branch %>&batch=<%= search.batch %>">Previous</a>
+            </li>
+          <% } else { %>
+            <li class="page-item disabled">
+              <span class="page-link">Previous</span>
+            </li>
+          <% } %>
 
-    <!-- Page indicator -->
-    <li class="page-item disabled">
-      <span class="page-link">Page <%= currentPage %> of <%= totalPages %></span>
-    </li>
+          <!-- Page indicator -->
+          <li class="page-item disabled">
+            <span class="page-link">Page <%= currentPage %> of <%= totalPages %></span>
+          </li>
 
-    <% if (currentPage < totalPages) { %>
-      <li class="page-item">
-        <a class="page-link" href="/?page=<%= currentPage + 1 %>&date=<%= search.date %>&branch=<%= search.branch %>&batch=<%= search.batch %>">Next</a>
-      </li>
-    <% } else { %>
-      <li class="page-item disabled">
-        <span class="page-link">Next</span>
-      </li>
-    <% } %>
-  </ul>
-</nav>
-
-
-
+          <% if (currentPage < totalPages) { %>
+            <li class="page-item">
+              <a class="page-link" href="/absent?page=<%= currentPage + 1 %>&date=<%= search.date %>&branch=<%= search.branch %>&batch=<%= search.batch %>">Next</a>
+            </li>
+          <% } else { %>
+            <li class="page-item disabled">
+              <span class="page-link">Next</span>
+            </li>
+          <% } %>
+        </ul>
+      </nav>
     </div>
 
     <!-- Bootstrap JS and dependencies -->
