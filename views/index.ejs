@@ -13,8 +13,40 @@
   <body>
     <div class="container mt-5" style="max-width: 950px">
       <h1 class="text-center mb-4">Student Attendance Data </h1>
-
-
+      <button class="btn btn-warning" data-toggle="modal" data-target="#absentModal">
+        Calculate Today's Absentees
+      </button>
+<!-- Absentees Calculation Modal -->
+<div class="modal fade" id="absentModal" tabindex="-1" aria-labelledby="absentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="absentModalLabel">Calculate Today's Absentees</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="absentForm">
+          <div class="form-group">
+            <label for="branchSelect">Select Branch</label>
+            <select id="branchSelect" class="form-control" required>
+              <option value="">Select a branch</option>
+              <% branches.forEach(branch => { %>
+                <option value="<%= branch.branchName %>"><%= branch.branchName %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="dateInput">Select Date</label>
+            <input type="date" id="dateInput" class="form-control" required>
+          </div>
+          <button type="button" id="calculateAbsent" class="btn btn-primary">Calculate</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
       <div class="mb-4 d-flex justify-content-center">
         <form class="form-inline" action="/" method="GET">
           <div class="form-group mr-2">
@@ -68,6 +100,10 @@
               <th>Name</th>
               <th>Roll</th>
               <th>Phone</th>
+              <th>Branch</th>
+              <th>Batch</th>
+              <th>Date</th>
+              <th>Status</th>
 
             </tr>
           </thead>
@@ -77,6 +113,10 @@
               <td><%= student.Name %></td>
               <td><%= student.roll %></td>
               <td><%= student.Phone %></td>
+              <td><%= student.branch.text %></td>
+              <td><%= student.batch %></td>
+              <td><%= new Date(student.date).toLocaleDateString('en-GB') %></td>
+              <td> <span class="badge badge-success">Present</span></td>
               <!-- <td>
                 <a href="<%= student.FbLink %>" target="_blank"
                   ><%= student.FbName %></a
@@ -124,8 +164,37 @@
     </div>
 
     <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+  $('#calculateAbsent').on('click', function() {
+    const branch = $('#branchSelect').val();
+    const date = $('#dateInput').val();
+
+    if (!branch || !date) {
+      alert('Please select both branch and date.');
+      return;
+    }
+
+    $.ajax({
+      url: '/calculate-absent',
+      method: 'POST',
+      contentType: 'application/json',  // Specify content type as JSON
+      data: JSON.stringify({ date, branch }),
+      success: function(response) {
+        alert(response.message);  
+        $('#absentModal').modal('hide');  
+      },
+      error: function(error) {
+        console.error('Error:', error);
+        alert('Something went wrong. Please try again.');
+      }
+    });
+  });
+</script>
+
+    </script>
   </body>
 </html>

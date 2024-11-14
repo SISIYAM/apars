@@ -6,6 +6,8 @@ const Attendance = require("./models/Attendance");
 const Profile = require("./models/Profile");
 const fs = require("fs");
 const { createObjectCsvWriter } = require("csv-writer");
+const moment = require("moment");
+const Absent = require("./models/Absent");
 
 const app = express();
 
@@ -84,33 +86,136 @@ app.get("/", async (req, res) => {
   }
 });
 
-// Route to fetch absent students
 app.get("/absent", async (req, res) => {
   try {
-    const searchDate = req.query.date ? new Date(req.query.date) : null;
-    if (!searchDate)
-      return res
-        .status(400)
-        .json({ error: "Date is required for absence check" });
+    const page = parseInt(req.query.page) || 1;
+    const limit = 20;
+    const skip = (page - 1) * limit;
 
-    // Assuming "allStudents" has all registered students with the Profile model
-    const allStudents = await Profile.find({});
-    const presentStudents = await Attendance.find({
+    // Handle the date filter
+    let searchDate = null;
+    if (req.query.date) {
+      searchDate = new Date(req.query.date);
+      searchDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(searchDate);
+      endDate.setHours(23, 59, 59, 999);
+
+      // Apply the date range filter
+      searchDate = { $gte: searchDate, $lt: endDate };
+    }
+
+    const searchBranch = req.query.branch || "";
+    const searchBatch = req.query.batch || "";
+
+    // Construct the query based on the filters
+    const query = {
+      ...(searchDate && { date: searchDate }),
+      ...(searchBranch && { branch: searchBranch }),
+      ...(searchBatch && { batch: searchBatch }),
+    };
+
+    // Fetch attendance data with pagination
+    const attendances = await Absent.find(query).skip(skip).limit(limit);
+    const totalAttendances = await Absent.countDocuments(query);
+    const totalPages = Math.ceil(totalAttendances / limit);
+
+    // Render the results with pagination
+    res.render("absent", {
+      students: attendances,
+      currentPage: page,
+      totalPages,
+      branches,
+      batches,
+      search: {
+        date: req.query.date || "",
+        branch: searchBranch,
+        batch: searchBatch,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error retrieving attendance data");
+  }
+});
+
+app.post("/calculate-absent", async (req, res) => {
+  const { date, branch } = req.body;
+
+  try {
+    // Convert date to the correct format (e.g., YYYY-MM-DD)
+    const formattedDate = moment(date).format("YYYY-MM-DD");
+
+    // Convert the date to UTC start of day and end of day
+    const startOfDay = moment(formattedDate).startOf("day").utc().toDate();
+    const endOfDay = moment(formattedDate).endOf("day").utc().toDate();
+
+    // Find all attendance records that match the branch and date
+    const attendanceRecords = await Attendance.find({
+      "branch.text": branch,
       time: {
-        $gte: searchDate,
-        $lt: new Date(searchDate.getTime() + 86400000),
+        $gte: startOfDay,
+        $lt: endOfDay,
       },
     });
 
-    const presentIds = new Set(presentStudents.map((student) => student.uid));
-    const absentStudents = allStudents.filter(
-      (student) => !presentIds.has(student.uid)
-    );
+    // If a branch is provided, filter students from the Profile model by branch
+    let students = [];
+    if (branch) {
+      // Extract the IDs from the attendance records
+      const attendanceIds = attendanceRecords.map((record) => record.id);
 
-    res.json({ absent: absentStudents });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error fetching absent students");
+      // Fetch all students from the Profile model where the Branch matches
+      students = await Profile.find({
+        Branch: branch,
+      });
+
+      // Filter out students whose ID matches any of the attendance IDs
+      const filteredStudents = students.filter(
+        (student) => !attendanceIds.includes(student._id.toString())
+      );
+
+      // Log the filtered students
+      console.log("Filtered Students (Not in Attendance):", filteredStudents);
+
+      // Save the filtered students into the Absent collection
+      if (filteredStudents.length > 0) {
+        // Create an array of absent records to match the schema
+        const absentRecords = filteredStudents.map((student) => ({
+          id: student.uid,
+          address: student.Address || "",
+          email: student.Email || "",
+          FbLink: student.FbLink || "",
+          FbName: student.FbName || "",
+          HSC: student.HSC || "",
+          Institution: student.Institution || "",
+          Name: student.Name || "",
+          Parent: student.Parent || "",
+          Phone: student.Phone || "",
+          roll: student.roll || "",
+          time: startOfDay,
+          branch: branch,
+          status: "absent",
+          date: formattedDate,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }));
+
+        console.log(absentRecords);
+        // Insert the absent records into the Absent collection
+        await Absent.insertMany(absentRecords);
+
+        console.log("Absent students saved to the Absent collection.");
+      }
+    }
+
+    // Send the response back
+    res.status(200).json({
+      message: "Absent students calculated and saved",
+      data: students,
+    });
+  } catch (error) {
+    console.error("Error calculating absent students:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
