@@ -50,6 +50,8 @@
       <div class="mb-4 d-flex justify-content-center">
         <form class="form-inline" action="/" method="GET">
           <div class="form-group mr-2">
+           
+
             <label for="date" class="sr-only">Date</label>
             <input
               type="date"
@@ -83,7 +85,7 @@
           <button class="btn btn-primary mr-2" type="submit">Search</button>
           <div>
             <a
-              href="/export-csv?date=<%= search.date %>&branch=<%= search.branch %>&batch=<%= search.batch %>"
+              href="/export-csv?key=attendance&date=<%= search.date %>&branch=<%= search.branch %>&batch=<%= search.batch %>"
               class="btn btn-success"
               >Export as CSV</a
             >
@@ -115,7 +117,7 @@
               <td><%= student.Phone %></td>
               <td><%= student.branch.text %></td>
               <td><%= student.batch %></td>
-              <td><%= new Date(student.date).toLocaleDateString('en-GB') %></td>
+              <td><%= new Date(student.time).toLocaleDateString('en-GB') %></td>
               <td> <span class="badge badge-success">Present</span></td>
               <!-- <td>
                 <a href="<%= student.FbLink %>" target="_blank"

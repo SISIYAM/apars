@@ -17,6 +17,7 @@
       <div class="mb-4 d-flex justify-content-center">
         <form class="form-inline" action="/absent" method="GET">
           <div class="form-group mr-2">
+            <input type="hidden" name="key" value="absent" id="">
             <label for="date" class="sr-only">Date</label>
             <input
               type="date"
@@ -50,7 +51,7 @@
           <button class="btn btn-primary mr-2" type="submit">Search</button>
           <div>
             <a
-              href="/export-csv?date=<%= search.date %>&branch=<%= search.branch %>&batch=<%= search.batch %>"
+              href="/export-csv?key=absent&date=<%= search.date %>&branch=<%= search.branch %>&batch=<%= search.batch %>"
               class="btn btn-success"
               >Export as CSV</a
             >
@@ -65,6 +66,8 @@
               <th>Name</th>
               <th>Roll</th>
               <th>Phone</th>
+              <th>Course</th>
+              <th>Batch</th>
               <th>Branch</th>
               <th>Date</th>
               <th>Status</th> <!-- This column will display attendance status (Present/Absent) -->
@@ -76,7 +79,9 @@
               <td><%= student.Name %></td>
               <td><%= student.roll %></td>
               <td><%= student.Phone %></td>
-              <td><%= student.branch %></td> <!-- Added the branch field to the table -->
+              <td><%= student.course %></td>
+              <td><%= student.batch %></td>
+              <td><%= student.branch %></td>
               <td><%= new Date(student.date).toLocaleDateString('en-GB') %></td>
 
               <td>

@@ -16,6 +16,7 @@ const absentSchema = new mongoose.Schema(
     Phone: String,
     roll: String,
     batch: String,
+    course: String,
     time: Date,
     branch: String,
     status: { type: String, default: "absent" }, // Mark the status as absent

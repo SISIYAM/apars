@@ -142,14 +142,10 @@ app.post("/calculate-absent", async (req, res) => {
   const { date, branch } = req.body;
 
   try {
-    // Convert date to the correct format (e.g., YYYY-MM-DD)
     const formattedDate = moment(date).format("YYYY-MM-DD");
-
-    // Convert the date to UTC start of day and end of day
     const startOfDay = moment(formattedDate).startOf("day").utc().toDate();
     const endOfDay = moment(formattedDate).endOf("day").utc().toDate();
 
-    // Find all attendance records that match the branch and date
     const attendanceRecords = await Attendance.find({
       "branch.text": branch,
       time: {
@@ -158,57 +154,55 @@ app.post("/calculate-absent", async (req, res) => {
       },
     });
 
-    // If a branch is provided, filter students from the Profile model by branch
     let students = [];
     if (branch) {
-      // Extract the IDs from the attendance records
       const attendanceIds = attendanceRecords.map((record) => record.id);
+      students = await Profile.find({ Branch: branch });
 
-      // Fetch all students from the Profile model where the Branch matches
-      students = await Profile.find({
-        Branch: branch,
-      });
-
-      // Filter out students whose ID matches any of the attendance IDs
       const filteredStudents = students.filter(
         (student) => !attendanceIds.includes(student._id.toString())
       );
 
-      // Log the filtered students
-      console.log("Filtered Students (Not in Attendance):", filteredStudents);
-
-      // Save the filtered students into the Absent collection
       if (filteredStudents.length > 0) {
-        // Create an array of absent records to match the schema
-        const absentRecords = filteredStudents.map((student) => ({
-          id: student.uid,
-          address: student.Address || "",
-          email: student.Email || "",
-          FbLink: student.FbLink || "",
-          FbName: student.FbName || "",
-          HSC: student.HSC || "",
-          Institution: student.Institution || "",
-          Name: student.Name || "",
-          Parent: student.Parent || "",
-          Phone: student.Phone || "",
-          roll: student.roll || "",
-          time: startOfDay,
-          branch: branch,
-          status: "absent",
-          date: formattedDate,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }));
+        let absentRecords = [];
+
+        // Iterate over each filtered student
+        filteredStudents.forEach((student) => {
+          // console.log(student.Courses);
+          if (student.Courses && Array.isArray(student.Courses)) {
+            // Create an absent record for each course in the Courses array
+            student.Courses.forEach((course) => {
+              absentRecords.push({
+                id: student.uid,
+                address: student.Address || "",
+                email: student.Email || "",
+                FbLink: student.FbLink || "",
+                FbName: student.FbName || "",
+                HSC: student.HSC || "",
+                Institution: student.Institution || "",
+                Name: student.Name || "",
+                Parent: student.Parent || "",
+                Phone: student.Phone || "",
+                roll: student.roll || "",
+                time: startOfDay,
+                branch: student.Branch || "",
+                course: course.course || "",
+                batch: course.batch || "",
+                status: "absent",
+                date: formattedDate,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              });
+            });
+          }
+        });
 
         console.log(absentRecords);
-        // Insert the absent records into the Absent collection
         await Absent.insertMany(absentRecords);
-
         console.log("Absent students saved to the Absent collection.");
       }
     }
 
-    // Send the response back
     res.status(200).json({
       message: "Absent students calculated and saved",
       data: students,
@@ -222,9 +216,18 @@ app.post("/calculate-absent", async (req, res) => {
 // Route to export filtered data as CSV
 app.get("/export-csv", async (req, res) => {
   try {
-    const searchDate = req.query.date ? new Date(req.query.date) : null;
-    const searchBranch = req.query.branch || "";
-    const searchBatch = req.query.batch || "";
+    const { date, branch, batch, key } = req.query; // Extract query parameters
+    const searchDate = date ? new Date(date) : null;
+    const searchBranch = branch || "";
+    const searchBatch = batch || "";
+
+    // Validate the key to decide which model to use
+    const Model =
+      key === "absent" ? Absent : key === "attendance" ? Attendance : null;
+
+    if (!Model) {
+      return res.status(400).send("Invalid key. Use 'absent' or 'attendance'.");
+    }
 
     const query = {
       ...(searchDate && {
@@ -237,7 +240,8 @@ app.get("/export-csv", async (req, res) => {
       ...(searchBatch && { batch: searchBatch }),
     };
 
-    const attendances = await Attendance.find(query);
+    // Fetch records from the selected model
+    const recordsData = await Model.find(query);
 
     const csvWriter = createObjectCsvWriter({
       path: "exported_attendances.csv",
@@ -250,12 +254,12 @@ app.get("/export-csv", async (req, res) => {
       ],
     });
 
-    const records = attendances.map((att) => ({
-      Name: att.Name,
-      roll: att.roll,
-      Phone: att.Phone,
-      batch: att.batch,
-      branchName: att.branch?.text || "N/A",
+    const records = recordsData.map((record) => ({
+      Name: record.Name,
+      roll: record.roll,
+      Phone: record.Phone,
+      batch: record.batch,
+      branchName: record.branch?.text || "N/A",
     }));
 
     await csvWriter.writeRecords(records);
